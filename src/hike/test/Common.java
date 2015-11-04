@@ -3,14 +3,14 @@ package hike.test;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
+
+import hike.test.set.OnlyRedisSet;
+import hike.test.set.Set;
 
 public class Common {
 	private static ConcurrentHashMap<Integer,Integer> lastCompletedTask = new ConcurrentHashMap<Integer,Integer>();
 	private static ConcurrentHashMap<Integer,Integer> lastCreatedTask = new ConcurrentHashMap<Integer,Integer>();
-	private static Set usersWithErrors=new Set("userWithErrors");
-	
-	public static Semaphore processingLock=new Semaphore(1);
+	private static Set usersWithErrors=new OnlyRedisSet("userWithErrors");
 	
 	private static final int N=100;
 	private static final float threshPer=0.7f;
@@ -76,39 +76,17 @@ public class Common {
 	}
 
 	public static boolean hasUnresolvedError(int userId) {
-		boolean ret=false;
-		try {
-			processingLock.acquire();
-			if( usersWithErrors.contains( String.valueOf(userId) ) )
-				ret= true;
-			processingLock.release();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return ret;
+		if( usersWithErrors.contains( String.valueOf(userId) ) )
+			return true;
+		return false;
 	}
 
 	public static void newError(int userId) {
-		try {
-			processingLock.acquire();
-			usersWithErrors.add( String.valueOf(userId) );
-			processingLock.release();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		usersWithErrors.add( String.valueOf(userId) );
 	}
 	
 	public static void clearUsersWithErrors(){
-		try {
-			processingLock.acquire();
-			usersWithErrors.clear();
-			processingLock.release();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		usersWithErrors.clear();
 	}
 	
 	public static boolean processTask(Task t,float failProb,Boolean isErrorConsumer){
