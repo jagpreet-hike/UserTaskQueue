@@ -22,6 +22,14 @@ public class Common {
 //	{
 //		rand.setSeed(seed);
 //	}
+	/*
+	* This Function is called in main to make sure all static variables of this class are initialized before program starts processing tasks. 
+	* (required for fetching data from redis when using OnlyLocalSet, before data is altered by consumers.)
+	* Just a work-around for time being.
+	*/
+	public static void init(){ 
+		rand.setSeed(System.currentTimeMillis());
+	}
 	
 	private static boolean runTask(Task t,float failProb){
 		try {

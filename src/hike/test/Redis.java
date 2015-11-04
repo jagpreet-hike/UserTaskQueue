@@ -554,4 +554,29 @@ public class Redis {
             }
         }	
 	}
+	
+	public List<String> lrange(String key,long start,long end){
+		Jedis jedis = null;
+        try
+        {
+            jedis = redisPool.getResource();
+            return jedis.lrange(key, start, end);  
+        }
+        catch (JedisConnectionException e) 
+        {
+            if (jedis != null) 
+            {
+                redisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            return null;
+        }
+        finally
+        {
+            if (jedis != null)
+            {
+                redisPool.returnResource(jedis);
+            }
+        }	
+	}
 }

@@ -10,6 +10,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		
+		Common.init();
 		Queue q= new Queue("main");
 		Queue eq= new Queue("error");
 		
