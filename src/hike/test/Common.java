@@ -24,7 +24,6 @@ public class Common {
 //	}
 	
 	private static boolean runTask(Task t,float failProb){
-		System.out.println(getCurrentRateOfError());
 		try {
 			Thread.sleep(AVERAGE_PROCESSING_TIME);
 		} catch (InterruptedException e) {
@@ -43,7 +42,7 @@ public class Common {
 	
 	private static void onTaskSuccess(Task t){
 		//success
-		System.out.println("Success!!");
+//		System.out.println("Success!!");
 		checkTaskOrder(t);
 		updateLastCompletedTask(t);
 	}
@@ -122,10 +121,11 @@ public class Common {
 		}
 		
 		if(!isErrorConsumer){
-			
+			System.out.println(getCurrentRateOfError());
+
 			if(error){
 				if(getCurrentRateOfError()>=threshPer){
-					while(!runTask(t, failProb));
+					while(hasUnresolvedError(t.getUserId()) || !runTask(t, failProb));
 					error= false;
 				}
 				else

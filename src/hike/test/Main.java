@@ -6,14 +6,14 @@ import java.util.TimerTask;
 
 public class Main {
 	
-	private static final int maxUser=2;
+	private static final int maxUser=4;
 
 	public static void main(String[] args) {
 		
 		Queue q= new Queue("main");
 		Queue eq= new Queue("error");
 		
-		QConsumer cons=new QConsumer(q, 0.99f,new QConsumer.TaskFailCallback() {
+		QConsumer cons=new QConsumer(q, 0.10f,new QConsumer.TaskFailCallback() {
 			@Override
 			void callback(Task t) {
 				synchronized (eq) {
@@ -30,10 +30,10 @@ public class Main {
 			}
 		},false);
 		
-		QConsumer econs=new QConsumer(eq, 0.99f,new QConsumer.TaskFailCallback() {
+		QConsumer econs=new QConsumer(eq, 0.08f,new QConsumer.TaskFailCallback() {
 			@Override
 			void callback(Task t) {
-				while(!Common.processTask(t, 0.06f, true));
+				while(!Common.processTask(t, 0.08f, true));
 			}
 		}, new QConsumer.OnQEmptyCallback(){
 			@Override
@@ -55,7 +55,7 @@ public class Main {
 					q.notifyAll();
 				}
 			}
-		}, 1, 1);
+		}, 100, 100);
 		
 		cons.start();
 		econs.start();
