@@ -28,9 +28,9 @@ public class QConsumer extends Thread {
 	@Override
 	public void run(){
 		while(true){
-			Task t;
+			String temp;
 			synchronized(q){
-				while(q.isEmpty()){
+				do{
 					onQEmpty.callback();
 					try {
 						q.wait();
@@ -38,13 +38,17 @@ public class QConsumer extends Thread {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}
-				t=Task.createTaskFromString(q.pop());
+				}while(q.isEmpty());
 			}
 			
-			if( !Common.processTask(t, failProb, isErrorConsumer) ){
-				//fail
-				onFail.callback(t);
+			temp=q.pop();
+			while(temp!=null){
+				Task t=Task.createTaskFromString(temp);
+				if( !Common.processTask(t, failProb, isErrorConsumer) ){
+					//fail
+					onFail.callback(t);
+				}
+				temp=q.pop();
 			}
 		}
 	}
