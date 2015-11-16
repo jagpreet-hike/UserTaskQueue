@@ -1,7 +1,5 @@
 package hike.test;
 
-import java.util.Random;
-
 public class QConsumer extends Thread {
 	
 	public static abstract class TaskFailCallback{

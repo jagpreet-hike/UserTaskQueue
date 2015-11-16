@@ -17,11 +17,18 @@ public class Main {
 		QConsumer cons=new QConsumer(q, 0.10f,new QConsumer.TaskFailCallback() {
 			@Override
 			void callback(Task t) {
-				synchronized (eq) {
-//					System.out.println("Error in Main Queue, task: "+t);
-					eq.push(t.toString());
-					eq.notifyAll();
-					Common.newError(t.getUserId());
+				try {
+					Common.lock.acquire();
+					synchronized (eq) {
+//						System.out.println("Error in Main Queue, task: "+t);
+						eq.push(t.toString());
+						eq.notifyAll();
+						Common.newError(t.getUserId());
+					}
+					Common.lock.release();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		}, new QConsumer.OnQEmptyCallback(){
@@ -40,7 +47,14 @@ public class Main {
 			@Override
 			void callback() {
 //				System.out.println("Error Queue Empty!");
-				Common.clearUsersWithErrors();
+				try {
+					Common.lock.acquire();
+					Common.clearUsersWithErrors();
+					Common.lock.release();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		},true);
 		

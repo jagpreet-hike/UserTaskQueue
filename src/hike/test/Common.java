@@ -3,6 +3,7 @@ package hike.test;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import hike.test.set.OnlyRedisSet;
 import hike.test.set.Set;
@@ -19,6 +20,9 @@ public class Common {
 	private static int errorCount=0;
 	
 	private static final Random rand=new Random();
+
+	public static Semaphore lock=new Semaphore(1);
+	
 //	{
 //		rand.setSeed(seed);
 //	}
