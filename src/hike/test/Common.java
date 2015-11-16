@@ -3,16 +3,11 @@ package hike.test;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
-
-import hike.test.set.OnlyRedisSet;
-import hike.test.set.Set;
 
 public class Common {
 	private static ConcurrentHashMap<Integer,Integer> lastCompletedTask = new ConcurrentHashMap<Integer,Integer>();
 	private static ConcurrentHashMap<Integer,Integer> lastCreatedTask = new ConcurrentHashMap<Integer,Integer>();
-	private static Set usersWithErrors=new OnlyRedisSet("userWithErrors");
-	
+		
 	private static final int N=100;
 	private static final float threshPer=0.7f;
 	private static final int MAX_PROCESSING_TIME = 500;
@@ -21,7 +16,6 @@ public class Common {
 	
 	private static final Random rand=new Random();
 
-	public static Semaphore lock=new Semaphore(1);
 	
 //	{
 //		rand.setSeed(seed);
@@ -91,28 +85,11 @@ public class Common {
 		
 		return t;
 	}
-
-	public static boolean hasUnresolvedError(int userId) {
-		if( usersWithErrors.contains( String.valueOf(userId) ) )
-			return true;
-		return false;
-	}
-
-	public static void newError(int userId) {
-		usersWithErrors.add( String.valueOf(userId) );
-	}
-	
-	public static void clearUsersWithErrors(){
-		usersWithErrors.clear();
-	}
 	
 	public static boolean processTask(Task t,float failProb,Boolean isErrorConsumer){
 		boolean error=true;
-		
-		if( isErrorConsumer || !hasUnresolvedError(t.getUserId())  ){
-			if(runTask(t,failProb)){
-				error= false;
-			}
+		if(runTask(t,failProb)){
+			error= false;
 		}
 		
 		if(!isErrorConsumer){
@@ -120,7 +97,7 @@ public class Common {
 
 			if(error){
 				if(getCurrentRateOfError()>=threshPer){
-					while(hasUnresolvedError(t.getUserId()) || !runTask(t, failProb));
+					while(!runTask(t, failProb));
 					error= false;
 				}
 				else

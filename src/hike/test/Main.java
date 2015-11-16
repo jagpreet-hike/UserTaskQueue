@@ -11,52 +11,71 @@ public class Main {
 	public static void main(String[] args) {
 		
 		Common.init();
-		Queue q= new Queue("main");
-		Queue eq= new Queue("error");
 		
-		QConsumer cons=new QConsumer(q, 0.10f,new QConsumer.TaskFailCallback() {
+		Thread cons=new Thread(new Runnable(){
+			private static final float failProb=0.10f;
+			
 			@Override
-			void callback(Task t) {
-				try {
-					Common.lock.acquire();
-					synchronized (eq) {
-//						System.out.println("Error in Main Queue, task: "+t);
-						eq.push(t.toString());
-						eq.notifyAll();
-						Common.newError(t.getUserId());
+			public void run() {
+				while(true){
+					String temp;
+					do{
+						try {
+//							cons.wait();
+							Thread.sleep(10);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}while(RedisQueues.isTaskQEmpty());
+					
+					temp=RedisQueues.checkAndPopTask();
+					while(temp!=null){
+						if(temp.equals("error")){
+							temp=RedisQueues.checkAndPopTask();
+							continue;
+						}
+						Task t=Task.createTaskFromString(temp);
+						if( !Common.processTask(t, failProb, false) ){
+							//fail
+							RedisQueues.pushError(t);
+						}
+						temp=RedisQueues.checkAndPopTask();
 					}
-					Common.lock.release();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					System.out.println("GOT NULL!!!");
 				}
 			}
-		}, new QConsumer.OnQEmptyCallback(){
-			@Override
-			void callback() {
-//				System.out.println("Main Q Empty");
-			}
-		},false);
+		});
 		
-		QConsumer econs=new QConsumer(eq, 0.08f,new QConsumer.TaskFailCallback() {
+		Thread econs=new Thread(new Runnable(){
+			private static final float failProb=0.08f;
+			
 			@Override
-			void callback(Task t) {
-				while(!Common.processTask(t, 0.08f, true));
-			}
-		}, new QConsumer.OnQEmptyCallback(){
-			@Override
-			void callback() {
-//				System.out.println("Error Queue Empty!");
-				try {
-					Common.lock.acquire();
-					Common.clearUsersWithErrors();
-					Common.lock.release();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			public void run() {
+				while(true){
+					String temp;
+					do{
+						try {
+//							econs.wait();
+							Thread.sleep(10);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}while(RedisQueues.isErrQEmpty());
+					
+					temp=RedisQueues.popError();
+					while(temp!=null){
+						Task t=Task.createTaskFromString(temp);
+						if( !Common.processTask(t, failProb, true) ){
+							//fail
+							while(!Common.processTask(t, failProb, true));
+						}
+						temp=RedisQueues.popError();
+					}
 				}
 			}
-		},true);
+		});
 		
 		Timer producer=new Timer();
 		producer.schedule(new TimerTask(){
@@ -65,12 +84,9 @@ public class Main {
 			public void run() {
 				int user=rand.nextInt(maxUser);
 				Task t=Common.createNextTask(user);
-				synchronized(q){
-					q.push(t.toString());
-					q.notifyAll();
-				}
+				RedisQueues.pushTask(t);
 			}
-		}, 100, 100);
+		}, 10, 10);
 		
 		cons.start();
 		econs.start();
