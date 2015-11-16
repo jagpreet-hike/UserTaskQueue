@@ -15,7 +15,7 @@ public class Common {
 	
 	private static final int N=100;
 	private static final float threshPer=0.7f;
-	private static final int AVERAGE_PROCESSING_TIME = 1000;
+	private static final int MAX_PROCESSING_TIME = 500;
 	private static LinkedList<Boolean> lastNErrors=new LinkedList<Boolean>();
 	private static int errorCount=0;
 	
@@ -33,11 +33,16 @@ public class Common {
 	*/
 	public static void init(){ 
 		rand.setSeed(System.currentTimeMillis());
+		
+		/*clearing redis just for proper working of simulation*/
+		Redis.getInstance().del("Queue:error");
+		Redis.getInstance().del("Queue:main");
+		Redis.getInstance().del("Set:userWithErrors");
 	}
 	
 	private static boolean runTask(Task t,float failProb){
 		try {
-			Thread.sleep(AVERAGE_PROCESSING_TIME);
+			Thread.sleep(rand.nextInt(MAX_PROCESSING_TIME));
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
