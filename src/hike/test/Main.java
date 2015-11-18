@@ -42,7 +42,6 @@ public class Main {
 						}
 						temp=RedisQueues.checkAndPopTask();
 					}
-					System.out.println("GOT NULL!!!");
 				}
 			}
 		});
