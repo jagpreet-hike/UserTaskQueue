@@ -19,12 +19,12 @@ public class Main {
 			void callback(Task t) {
 				try {
 					Common.lock.acquire();
-					synchronized (eq) {
-//						System.out.println("Error in Main Queue, task: "+t);
-						eq.push(t.toString());
-						eq.notifyAll();
-						Common.newError(t.getUserId());
-					}
+//					System.out.println("Error in Main Queue, task: "+t);
+					
+					//TODO retry with expnonetail exception
+					eq.push(t.toString());
+					Common.newError(t.getUserId());
+					
 					Common.lock.release();
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -65,10 +65,7 @@ public class Main {
 			public void run() {
 				int user=rand.nextInt(maxUser);
 				Task t=Common.createNextTask(user);
-				synchronized(q){
-					q.push(t.toString());
-					q.notifyAll();
-				}
+				q.push(t.toString());
 			}
 		}, 100, 100);
 		

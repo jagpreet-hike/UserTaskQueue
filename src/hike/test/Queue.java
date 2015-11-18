@@ -19,6 +19,10 @@ public class Queue {
 		return Redis.getInstance().lpop("Queue:"+qname);
 	}
 	
+	public String pop(int timeout){
+		return Redis.getInstance().blpop("Queue:"+qname,timeout);
+	}
+	
 	public boolean isEmpty(){
 		if(Redis.getInstance().llen("Queue:"+qname)==0)
 			return true;

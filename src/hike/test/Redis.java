@@ -530,6 +530,33 @@ public class Redis {
         }	
 	}
 	
+	public String blpop(String key,int timeout){
+		Jedis jedis = null;
+        try
+        {
+            jedis = redisPool.getResource();
+            List<String> ret= jedis.blpop(timeout, key);
+            if(ret!=null)
+            	return ret.get(1);
+            return null;
+        }
+        catch (JedisConnectionException e) 
+        {
+            if (jedis != null) 
+            {
+                redisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            return null;
+        }
+        finally
+        {
+            if (jedis != null)
+            {
+                redisPool.returnResource(jedis);
+            }
+        }	
+	}
 	public Long llen(String key){
 		Jedis jedis = null;
         try
