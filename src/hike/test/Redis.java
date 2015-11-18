@@ -7,7 +7,9 @@ import java.util.Set;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.ScanResult;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 public class Redis {
 	private static Redis _instance;
@@ -557,6 +559,7 @@ public class Redis {
             }
         }	
 	}
+	
 	public Long llen(String key){
 		Jedis jedis = null;
         try
@@ -606,4 +609,98 @@ public class Redis {
             }
         }	
 	}
+
+	public void rename(String oldK, String newK) {
+		Jedis jedis = null;
+        try
+        {
+            jedis = redisPool.getResource();
+            jedis.rename(oldK, newK);
+        }
+        catch (JedisDataException e){
+        	
+        }
+        catch (JedisConnectionException e) 
+        {
+            if (jedis != null) 
+            {
+                redisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+        }
+        finally
+        {
+            if (jedis != null)
+            {
+                redisPool.returnResource(jedis);
+            }
+        }	
+	}
+
+	public long scard(String key) {
+		Jedis jedis = null;
+        try
+        {
+            jedis = redisPool.getResource();
+            return jedis.scard(key);
+        }
+        catch (JedisConnectionException e) 
+        {
+            if (jedis != null) 
+            {
+                redisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            return 0;
+        }
+        finally
+        {
+            if (jedis != null)
+            {
+                redisPool.returnResource(jedis);
+            }
+        }
+	}
+
+	public ScanResult<String> sscan(String key,String cursor) {
+		Jedis jedis = null;
+        try
+        {
+            jedis = redisPool.getResource();
+            return jedis.sscan(key, cursor);
+        }
+        catch (JedisConnectionException e) 
+        {
+            if (jedis != null) 
+            {
+                redisPool.returnBrokenResource(jedis);
+                jedis = null;
+            }
+            return null;
+        }
+        finally
+        {
+            if (jedis != null)
+            {
+                redisPool.returnResource(jedis);
+            }
+        }
+	}
+	
+	public void deleteSetInBatch(String set) {
+		String newKey=set+System.currentTimeMillis();
+		Redis.getInstance().rename(set,newKey);
+		new Thread(){
+			@Override
+			public void run(){
+				String cursor="0";
+				do{
+					ScanResult<String> res=Redis.getInstance().sscan(newKey, cursor);
+					Redis.getInstance().srem(newKey, res.getResult().toArray(new String[0]));
+					cursor=res.getStringCursor();
+				}while(!cursor.equals("0"));
+			}
+		};
+	}
+	
 }

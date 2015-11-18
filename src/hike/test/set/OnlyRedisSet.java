@@ -1,6 +1,7 @@
 package hike.test.set;
 
 import hike.test.Redis;
+import redis.clients.jedis.ScanResult;
 
 public class OnlyRedisSet extends Set{
 	private String sname;
@@ -19,7 +20,13 @@ public class OnlyRedisSet extends Set{
 	}
 	
 	public void clear(){
-		Redis.getInstance().del("Set:"+sname);
+		Redis.getInstance().deleteSetInBatch("Set:"+sname);
+	}
+
+
+	@Override
+	public boolean init() {
+		return true;
 	}
 
 }

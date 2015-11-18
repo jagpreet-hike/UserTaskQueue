@@ -2,7 +2,9 @@ package hike.test.set;
 
 import java.util.HashSet;
 
+import hike.test.Common;
 import hike.test.Redis;
+import redis.clients.jedis.ScanResult;
 
 public class RedisAndLocalSet extends Set {
 	private String sname;
@@ -10,9 +12,6 @@ public class RedisAndLocalSet extends Set {
 	
 	public RedisAndLocalSet(String sname) {
 		this.sname=sname;
-		synchronized(localSet){
-			localSet.addAll( Redis.getInstance().smembers("Set:"+sname) );
-		};
 	}
 	
 	@Override
@@ -22,18 +21,35 @@ public class RedisAndLocalSet extends Set {
 
 	@Override
 	public void add(String elem) {
-		synchronized(localSet){
-			localSet.add(elem);
-		}
+		localSet.add(elem);
 		Redis.getInstance().sadd("Set:"+sname, elem);
 	}
 
 	@Override
 	public void clear() {
-		synchronized(localSet){
-			localSet.clear();
+		localSet.clear();
+		Redis.getInstance().deleteSetInBatch("Set:"+sname);
+	}
+
+	@Override
+	public boolean init() {
+		try {
+			Common.lock.acquire();
+			
+			String cursor="0";
+			do{
+				ScanResult<String> res=Redis.getInstance().sscan("Set:"+sname,cursor);
+				localSet.addAll( res.getResult() );
+				cursor=res.getStringCursor();
+			}while(!cursor.equals("0"));
+			
+			Common.lock.release();
+			return true;
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
 		}
-		Redis.getInstance().del("Set:"+sname);
 	}
 
 }

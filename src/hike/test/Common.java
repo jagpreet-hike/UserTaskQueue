@@ -33,6 +33,7 @@ public class Common {
 	*/
 	public static void init(){ 
 		rand.setSeed(System.currentTimeMillis());
+		usersWithErrors.init();
 		
 		/*clearing redis just for proper working of simulation*/
 		Redis.getInstance().del("Queue:error");
